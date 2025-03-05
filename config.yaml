@@ -1,0 +1,4 @@
+grpc_server:
+  port: 50051 #port of the grpc server
+graphql_server:
+  port: 3000
