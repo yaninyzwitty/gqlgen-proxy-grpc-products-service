@@ -18,6 +18,9 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 	"github.com/yaninyzwitty/gqlgen-proxy-grpc-products-service/graph"
 	"github.com/yaninyzwitty/gqlgen-proxy-grpc-products-service/internal/pkg"
+	"github.com/yaninyzwitty/gqlgen-proxy-grpc-products-service/pb"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -34,7 +37,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	address := fmt.Sprintf("%d", cfg.GrpcServer.Port)
+	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		slog.Error("failed to create grpc client", "error", err)
+		os.Exit(1)
+	}
+
+	defer conn.Close()
+
+
+client := pb.NewProductServiceClient(conn)
+
+	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{Conn:  client }}))
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})

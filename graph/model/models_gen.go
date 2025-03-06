@@ -2,25 +2,44 @@
 
 package model
 
+type Category struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CreatedAt   string `json:"createdAt"`
+}
+
+type CreateCategoryInput struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+type CreateProductInput struct {
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Price       float64 `json:"price"`
+	Stock       int32   `json:"stock"`
+	CategoryID  string  `json:"categoryId"`
+}
+
+type ListProductsResponse struct {
+	Products    []*Product `json:"products"`
+	PagingState *string    `json:"pagingState,omitempty"`
+}
+
 type Mutation struct {
 }
 
-type NewTodo struct {
-	Text   string `json:"text"`
-	UserID string `json:"userId"`
+type Product struct {
+	ID          string  `json:"id"`
+	CategoryID  string  `json:"categoryId"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Price       float64 `json:"price"`
+	Stock       int32   `json:"stock"`
+	CreatedAt   string  `json:"createdAt"`
+	UpdatedAt   string  `json:"updatedAt"`
 }
 
 type Query struct {
-}
-
-type Todo struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-	Done bool   `json:"done"`
-	User *User  `json:"user"`
-}
-
-type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
 }
