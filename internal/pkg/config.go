@@ -23,7 +23,7 @@ type Database struct {
 	Path     string `yaml:"path"`
 }
 type GrpcServer struct {
-	Port string `yaml:"port"`
+	Port int `yaml:"port"`
 }
 
 type GraphqlServer struct {

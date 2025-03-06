@@ -8,5 +8,5 @@ database:
   path: ./secure-connect.zip
 queue:
   uri: pulsar+ssl://pulsar-aws-eucentral1.streaming.datastax.com:6651
-  topic_name: persistent://witty-cluster/default/products_topic
+  topic: persistent://witty-cluster/default/products-topic
   token: some_token 
