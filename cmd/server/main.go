@@ -2,15 +2,24 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"net"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
+	"github.com/yaninyzwitty/gqlgen-proxy-grpc-products-service/internal/controller"
 	"github.com/yaninyzwitty/gqlgen-proxy-grpc-products-service/internal/database"
 	"github.com/yaninyzwitty/gqlgen-proxy-grpc-products-service/internal/helpers"
 	"github.com/yaninyzwitty/gqlgen-proxy-grpc-products-service/internal/pkg"
 	"github.com/yaninyzwitty/gqlgen-proxy-grpc-products-service/internal/queue"
 	"github.com/yaninyzwitty/gqlgen-proxy-grpc-products-service/internal/snowflake"
+	"github.com/yaninyzwitty/gqlgen-proxy-grpc-products-service/pb"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 // grpc server
@@ -37,6 +46,13 @@ func main() {
 		slog.Error("failed to initialize snowflake", "error", err)
 		os.Exit(1)
 	}
+
+	err = godotenv.Load()
+	if err != nil {
+		slog.Error("failed to load .env file", "error", err)
+		os.Exit(1)
+
+	}
 	astraCfg := &database.AstraConfig{
 		Username: cfg.Database.Username,
 		Path:     cfg.Database.Path,
@@ -44,7 +60,7 @@ func main() {
 	}
 
 	db := database.NewAstraDB()
-	session, err := db.Connect(ctx, astraCfg, 30)
+	session, err := db.Connect(ctx, astraCfg, 30*time.Second)
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)
 		os.Exit(1)
@@ -70,5 +86,35 @@ func main() {
 		os.Exit(1)
 	}
 	defer producer.Close()
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GrpcServer.Port))
+	if err != nil {
+		slog.Error("failed to listen", "error", err)
+		os.Exit(1)
+	}
+
+	productContoller := controller.NewProductController(session)
+
+	server := grpc.NewServer()
+	reflection.Register(server) //use server reflection, not required
+	pb.RegisterProductServiceServer(server, productContoller)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		sig := <-sigChan
+		slog.Info("Received shutdown signal", "signal", sig)
+		slog.Info("Shutting down gRPC server...")
+
+		// Gracefully stop the gRPC server
+		server.GracefulStop()
+		cancel() // Cancel context for other goroutines
+		slog.Info("gRPC server has been stopped gracefully")
+	}()
+
+	slog.Info("Starting gRPC server", "port", cfg.GrpcServer.Port)
+	if err := server.Serve(lis); err != nil {
+		slog.Error("gRPC server encountered an error while serving", "error", err)
+		os.Exit(1)
+	}
 
 }

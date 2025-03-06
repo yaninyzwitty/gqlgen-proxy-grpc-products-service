@@ -50,6 +50,7 @@ func (c *PulsarConfig) CreatePulsarConnection(ctx context.Context) (pulsar.Clien
 
 // CreatePulsarProducer creates a new producer for a specified topic
 func (c *PulsarConfig) CreatePulsarProducer(ctx context.Context, client pulsar.Client) (pulsar.Producer, error) {
+	slog.Info("name", "value", c.TopicName)
 	producerOptions := pulsar.ProducerOptions{
 		Topic: c.TopicName,
 	}
