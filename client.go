@@ -21,7 +21,6 @@ import (
 )
 
 func main() {
-
 	var cfg pkg.Config
 	file, err := os.Open("config.yaml")
 	if err != nil {
