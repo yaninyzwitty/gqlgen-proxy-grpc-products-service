@@ -10,8 +10,18 @@ import (
 type Config struct {
 	GrpcServer    GrpcServer    `yaml:"grpc_server"`
 	GraphqlServer GraphqlServer `yaml:"graphql_server"`
+	Database      Database      `yaml:"database"`
+	Queue         Pulsar        `yaml:"queue"`
 }
 
+type Pulsar struct {
+	URI   string `yaml:"uri"`
+	Topic string `yaml:"topic"`
+}
+type Database struct {
+	Username string `yaml:"username"`
+	Path     string `yaml:"path"`
+}
 type GrpcServer struct {
 	Port string `yaml:"port"`
 }
