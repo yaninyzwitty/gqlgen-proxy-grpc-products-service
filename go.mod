@@ -6,6 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.17.66
 	github.com/apache/pulsar-client-go v0.14.0
 	github.com/datastax/gocql-astra v0.0.0-20240612111451-db7831681c24
+	github.com/go-chi/chi/v5 v5.0.0
 	github.com/gocql/gocql v1.7.0
 	github.com/joho/godotenv v1.5.1
 	github.com/sony/sonyflake v1.2.0

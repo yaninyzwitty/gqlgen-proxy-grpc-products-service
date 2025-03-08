@@ -156,20 +156,30 @@ func (c *ProductController) ListProducts(ctx context.Context, req *pb.ListProduc
 		return nil, status.Errorf(codes.InvalidArgument, "category id and page size are required")
 	}
 
-	getProductsQuery := `SELECT id, name, description, price, stock, created_at, updated_at FROM products_keyspace_v2.products WHERE category_id = ?`
+	query := c.session.Query(`
+		SELECT id, name, description, price, stock, created_at, updated_at 
+		FROM products_keyspace_v2.products 
+		WHERE category_id = ?`,
+		req.CategoryId,
+	).WithContext(ctx).PageSize(int(req.PageSize)).PageState(req.PagingState)
 
-	query := c.session.Query(getProductsQuery, req.CategoryId).WithContext(ctx).PageSize(int(req.PageSize))
-	if req.PagingState != nil {
+	if len(req.PagingState) > 0 {
 		query = query.PageState(req.PagingState)
 	}
 
 	iter := query.Iter()
+	defer iter.Close()
+
 	var products []*pb.Product
-	var id int64
-	var name, description string
-	var price float32
-	var stock int32
-	var createdAt, updatedAt time.Time
+	var (
+		id          int64
+		name        string
+		description string
+		price       float32
+		stock       int32
+		createdAt   time.Time
+		updatedAt   time.Time
+	)
 
 	for iter.Scan(&id, &name, &description, &price, &stock, &createdAt, &updatedAt) {
 		products = append(products, &pb.Product{
@@ -178,10 +188,14 @@ func (c *ProductController) ListProducts(ctx context.Context, req *pb.ListProduc
 			Description: description,
 			Price:       price,
 			Stock:       stock,
+			CategoryId:  req.CategoryId,
 			CreatedAt:   timestamppb.New(createdAt),
 			UpdatedAt:   timestamppb.New(updatedAt),
 		})
 	}
+
+	// ✅ Check if Cassandra actually returns a paging state
+	nextPageState := iter.PageState()
 
 	if err := iter.Close(); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list products: %v", err)
@@ -189,6 +203,6 @@ func (c *ProductController) ListProducts(ctx context.Context, req *pb.ListProduc
 
 	return &pb.ListProductsResponse{
 		Products:    products,
-		PagingState: iter.PageState(),
+		PagingState: nextPageState,
 	}, nil
 }
