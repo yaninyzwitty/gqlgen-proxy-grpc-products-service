@@ -53,3 +53,14 @@ type ListProductsResponse {
   products: [Product!]!
   pagingState: String
 }
+
+# 233284213913165825 -electronics
+# 233284286491402241 - clothing
+# 233284428879634433 - books
+# 233284477030244353 - home appliances
+# 233284536237039617 - sports and outdoors
+# 233284627203104769 - furniture
+# 233284674347081729 - groceries
+# 233284770295980033 - Automotive
+# 233285181119668225 - Toys and Games
+# 233285236132159489 - Health and beauty

@@ -100,6 +100,28 @@ func main() {
 	pb.RegisterProductServiceServer(server, productContoller)
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	stopCH := make(chan os.Signal, 1)
+
+	// polling approach
+
+	go func() {
+		ticker := time.NewTicker(4 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				// poll messages
+				if err := helpers.ProcessMessages(context.Background(), session, producer); err != nil {
+					slog.Error("failed to process messages", "error", err)
+					os.Exit(1)
+				}
+			case <-stopCH:
+				return
+			}
+
+		}
+	}()
 	go func() {
 		sig := <-sigChan
 		slog.Info("Received shutdown signal", "signal", sig)
@@ -107,7 +129,9 @@ func main() {
 
 		// Gracefully stop the gRPC server
 		server.GracefulStop()
-		cancel() // Cancel context for other goroutines
+		cancel()      // Cancel context for other goroutines
+		close(stopCH) // Notify the polling goroutine to stop
+
 		slog.Info("gRPC server has been stopped gracefully")
 	}()
 

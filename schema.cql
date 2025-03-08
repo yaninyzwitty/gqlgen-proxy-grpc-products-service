@@ -26,3 +26,12 @@ CREATE TABLE IF NOT EXISTS products_outbox (
     event_type text,
     PRIMARY KEY((bucket), id)
 );
+
+CREATE TABLE inventory (
+    product_id bigint,
+    category_id bigint,
+    stock_count int,
+    created_at timestamp,
+    last_updated_at timestamp,
+    PRIMARY KEY (product_id, category_id)
+);
